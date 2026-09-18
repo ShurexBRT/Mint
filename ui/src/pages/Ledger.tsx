@@ -1,0 +1,7 @@
+import { useState } from 'react';
+import { label, type LedgerEntry } from '../api';
+import { Empty } from '../components/Primitives';
+export function LedgerPage({ items }: { items: LedgerEntry[] }) {
+  const [agent, setAgent] = useState('All agents');
+  return <><div className="toolbar"><p className="muted">Append-only record of local actions, evidence, and decisions.</p><select aria-label="Filter ledger by agent" value={agent} onChange={e => setAgent(e.target.value)}>{['All agents', ...new Set(items.map(e => e.agent))].map(a => <option key={a}>{a}</option>)}</select></div><section className="panel ledger-list">{items.length ? items.filter(e => agent === 'All agents' || e.agent === agent).map(e => <details key={e.id}><summary><span className="ledger-sequence">{String(e.sequence).padStart(3, '0')}</span><div><strong>{label(e.action)}</strong><span className="subline">{e.agent}{e.decision ? ` · ${label(e.decision)}` : ''}</span></div><span className="ledger-cost">€{e.costEstimate.toFixed(2)}</span><time>{new Date(e.createdAt).toLocaleString()}</time></summary><div className="ledger-body"><p className="muted">Opportunity: {e.opportunityId || '—'} · Experiment: {e.experimentId || '—'}</p><pre>{JSON.stringify({ evidenceIds: e.evidenceIds, result: e.result }, null, 2)}</pre></div></details>) : <Empty title="A clean audit trail">Run a pipeline to record agent inputs, outputs, timing, costs, and the resulting decision.</Empty>}</section></>;
+}

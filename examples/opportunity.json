@@ -1,0 +1,6 @@
+{
+  "title": "Synthetic accessibility handoff checklist",
+  "problemStatement": "A fictional freelancer misses accessibility checks when handing a website to a client.",
+  "targetUser": "Freelance web designers",
+  "evidence": [{ "sourceUrl": "https://example.org/synthetic/hand-off-1", "sourceType": "research", "excerpt": "[SYNTHETIC] A fictional freelancer reports missing keyboard navigation checks before a rushed handoff.", "signalType": "pain", "sourceIdentity": "fictional-designer-1", "community": "fictional-design-forum", "capturedAt": "2026-01-01T12:00:00.000Z", "confidence": 0.8, "synthetic": true }]
+}

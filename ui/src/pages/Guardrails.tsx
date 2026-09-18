@@ -1,0 +1,11 @@
+import { useState } from 'react';
+import { api } from '../api';
+export function GuardrailsPage({ busy, perform }: { busy: boolean; perform: (fn: () => Promise<unknown>, message: string) => Promise<void> }) {
+  const [action, setAction] = useState('paid_api'), [result, setResult] = useState<{ status: string; reason: string } | null>(null);
+  return <><div className="mission"><div className="mission-icon">€0</div><div><h2>MINT cannot spend money.</h2><p>SPEND_LIMIT = 0 is fixed in code, validated at startup, and enforced in SQLite.</p></div></div><div className="guardrail-grid">{[
+    ['Autonomous', 'Local research, evidence checks, analysis, scoring, internal experiment records, and analytics.'],
+    ['Approval required', 'Messaging, public posts, account creation, deployment, and pricing changes. Phase 1 records drafts only. No external executor exists.'],
+    ['Paid execution disabled', 'Purchases, ads, APIs, subscriptions, billed cloud resources, domains, hosting, and data. Requests return REQUIRES_OWNER_APPROVAL and never execute.'],
+    ['Prohibited', 'Trading, crypto trading, gambling, deception, fake reviews, spam, purchased engagement, unauthorized access, and hiding required AI identity.'],
+  ].map(([title, text]) => <section className="panel panel-body" key={title}><h2>{title}</h2><p>{text}</p></section>)}</div><section className="panel"><div className="section-heading"><h2>Inspect an authority decision</h2><span className="muted">Check only · no execution</span></div><form className="panel-body" onSubmit={e => { e.preventDefault(); void perform(async () => { const output = await api<{ status: string; reason: string }>('/authority', { action }); setResult(output); }, 'Authority check recorded in the ledger.'); }}><label>Action<select value={action} onChange={e => setAction(e.target.value)}>{['research', 'paid_api', 'purchase', 'paid_advertising', 'subscription', 'billed_cloud', 'paid_domain', 'paid_hosting', 'paid_data', 'public_post', 'send_message', 'deploy', 'create_account', 'change_pricing', 'financial_trading', 'crypto_trading', 'gambling', 'spam'].map(a => <option key={a}>{a}</option>)}</select></label><button className="primary" disabled={busy}>Check authority</button>{result && <div className="authority-result" role="status"><strong>{result.status}</strong><p>{result.reason}</p></div>}</form></section></>;
+}

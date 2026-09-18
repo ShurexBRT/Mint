@@ -1,0 +1,10 @@
+import { useState } from 'react';
+import { api, type Opportunity } from '../api';
+import { OpportunityTable } from '../features/opportunities/OpportunityTable';
+export function OpportunitiesPage({ items, onOpen, busy, perform }: { items: Opportunity[]; onOpen: (id: string) => void; busy: boolean; perform: (fn: () => Promise<unknown>, message: string) => Promise<void> }) {
+  const [filter, setFilter] = useState('ALL'), [query, setQuery] = useState(''), [importing, setImporting] = useState(false), [json, setJson] = useState('');
+  return <><div className="toolbar"><div className="filters">{['ALL', 'RESEARCH_MORE', 'VALIDATE', 'KILL'].map(f => <button key={f} className={filter === f ? 'selected' : ''} onClick={() => setFilter(f)}>{({ ALL: 'All opportunities', RESEARCH_MORE: 'Research', VALIDATE: 'Validate', KILL: 'Killed' })[f]}</button>)}</div><input aria-label="Search opportunities" placeholder="Search opportunities…" value={query} onChange={e => setQuery(e.target.value)}/><button className="secondary" onClick={() => setImporting(!importing)}>Import fixture</button></div>
+    {importing && <form className="panel import-form" onSubmit={e => { e.preventDefault(); void perform(() => api('/opportunities', JSON.parse(json)), 'Synthetic fixture imported. Open the opportunity to run its pipeline.'); }}><h2>Import a synthetic evidence fixture</h2><p>Use the JSON structure in <code>examples/opportunity.json</code>. Every evidence item must have <code>synthetic: true</code>.</p><label>Opportunity JSON<textarea className="json-input" required value={json} onChange={e => setJson(e.target.value)} placeholder={'{"title": "…", "problemStatement": "…", "targetUser": "…", "evidence": []}'}/></label><button className="primary" disabled={busy}>Import synthetic opportunity</button></form>}
+    <section className="panel"><OpportunityTable items={items.filter(o => (filter === 'ALL' || o.status === filter || filter === 'RESEARCH_MORE' && o.status === 'NEW') && `${o.title} ${o.targetUser}`.toLowerCase().includes(query.toLowerCase()))} onOpen={onOpen}/></section>
+  </>;
+}
