@@ -26,13 +26,17 @@ export function clusterSignals(signals: ResearchSignalCandidate[]): ResearchClus
   const groups: ResearchSignalCandidate[][] = [];
   for (const signal of signals) {
     const tokens = words(signal);
-    let best: { index: number; score: number } | null = null;
-    groups.forEach((group, index) => {
-      const groupTokens = new Set(group.flatMap(item => [...words(item)]));
+    let bestIndex = -1;
+    let bestScore = 0;
+    for (let index = 0; index < groups.length; index += 1) {
+      const groupTokens = new Set(groups[index].flatMap(item => [...words(item)]));
       const score = similarity(tokens, groupTokens);
-      if (score >= 0.16 && (!best || score > best.score)) best = { index, score };
-    });
-    if (best) groups[best.index].push(signal);
+      if (score >= 0.16 && score > bestScore) {
+        bestIndex = index;
+        bestScore = score;
+      }
+    }
+    if (bestIndex >= 0) groups[bestIndex].push(signal);
     else groups.push([signal]);
   }
 
