@@ -13,7 +13,8 @@
     "lint": "eslint . --max-warnings 0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "build": "tsc --noEmit && vite build"
+    "build": "tsc --noEmit && vite build",
+    "audit:prod": "npm audit --omit=dev --audit-level=high"
   },
   "dependencies": {
     "better-sqlite3": "^12.0.0",
