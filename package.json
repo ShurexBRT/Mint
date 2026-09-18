@@ -1,6 +1,6 @@
 {
   "name": "mint-local-lab",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,6 +8,8 @@
     "start": "tsx src/api/server.ts",
     "db:init": "tsx src/database/init.ts",
     "seed": "tsx src/database/seed.ts",
+    "hunt": "tsx src/cli/hunt.ts",
+    "hunt:dry": "tsx src/cli/hunt.ts --no-promote",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --max-warnings 0",

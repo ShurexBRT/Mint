@@ -112,7 +112,7 @@ export function RadarPage({
                 {cluster.keywords.map(keyword => <span key={keyword}>{label(keyword)}</span>)}
               </div>
               <p className="muted small">
-                {cluster.signalIds.length} public signals · {cluster.quality.buyingIntentCount} buying-intent · {cluster.quality.painCount} pain/urgency · {cluster.sourceCount} source types
+                {cluster.signalIds.length} public signals · {cluster.quality.freshSignalCount} fresh · {cluster.quality.buyingIntentCount} buying-intent · {cluster.quality.painCount} pain/urgency · {cluster.sourceCount} source types
               </p>
               {!cluster.quality.autoPromoteEligible && (
                 <p className="muted small">Auto-promote blockers: {cluster.quality.blockers.join(' · ')}</p>

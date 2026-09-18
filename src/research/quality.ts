@@ -10,6 +10,7 @@ export interface ClusterQuality {
   buyingIntentCount: number;
   recurringCount: number;
   averageConfidence: number;
+  freshSignalCount: number;
   score: number;
   autoPromoteEligible: boolean;
   blockers: string[];
@@ -17,6 +18,7 @@ export interface ClusterQuality {
 
 type QualitySignal = {
   id: string;
+  capturedAt?: string;
   sourceIdentity: string;
   source: string;
   sourceUrl: string;
@@ -41,6 +43,11 @@ export function evaluateCluster(
   const averageConfidence = signals.length
     ? signals.reduce((sum, signal) => sum + signal.confidence, 0) / signals.length
     : 0;
+  const freshnessCutoff = Date.now() - 540 * 24 * 60 * 60 * 1000;
+  const freshSignalCount = signals.filter(signal => {
+    const timestamp = new Date((signal as QualitySignal & { capturedAt?: string }).capturedAt ?? 0).getTime();
+    return Number.isFinite(timestamp) && timestamp >= freshnessCutoff;
+  }).length;
 
   const score = Math.round(Math.min(
     100,
@@ -61,6 +68,7 @@ export function evaluateCluster(
   if (painCount < 2) blockers.push('Need at least 2 explicit pain/urgency signals.');
   if (buyingIntentCount < 1) blockers.push('Need at least 1 explicit willingness-to-pay signal.');
   if (averageConfidence < 0.72) blockers.push('Average signal confidence must be at least 72%.');
+  if (freshSignalCount < 3) blockers.push('Need at least 3 signals captured within the last 540 days.');
   if (score < 70) blockers.push('Cluster quality score must be at least 70.');
 
   return {
@@ -73,6 +81,7 @@ export function evaluateCluster(
     buyingIntentCount,
     recurringCount,
     averageConfidence,
+    freshSignalCount,
     score,
     autoPromoteEligible: blockers.length === 0,
     blockers,

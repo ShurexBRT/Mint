@@ -61,7 +61,7 @@ The hunter rotates through zero-cost research missions such as:
 
 Each mission supplies four bounded research queries to Radar. After collection, MINT grades candidate clusters on signal count, identity diversity, source diversity, domain/community diversity, explicit pain, buying intent, recurrence, and confidence.
 
-A cluster may be **automatically promoted only into the internal decision pipeline** when it clears strict quality gates. Auto-promotion does not mean BUILD and cannot trigger any public or paid action.
+A cluster may be **automatically promoted only into the internal decision pipeline** when it clears strict quality gates. The gate also requires at least three signals from the last 540 days, so stale historical chatter cannot qualify by itself. Auto-promotion does not mean BUILD and cannot trigger any public or paid action.
 
 The hunter may promote at most one candidate per mission. Posting, messaging, deployment, account creation, purchasing, and spending remain unavailable.
 
@@ -288,10 +288,13 @@ http://127.0.0.1:4310
 ## Commands
 
 ```bash
+npm run hunt
+npm run hunt:dry
 npm run test
 npm run lint
 npm run typecheck
 npm run build
+npm run audit:prod
 npm run format:check
 ```
 
@@ -346,6 +349,24 @@ Phase 2 is useful when MINT can:
 7. honestly return `RESEARCH_MORE` when commercial evidence is still missing.
 
 The system should prefer an empty queue over fabricated demand.
+
+### Headless hunter
+
+The dashboard is optional for research. Run one bounded autonomous mission directly from the terminal:
+
+```bash
+npm run hunt
+```
+
+This may promote one qualifying cluster into the internal pipeline.
+
+To research without automatic internal promotion:
+
+```bash
+npm run hunt:dry
+```
+
+Both commands preserve the €0 spend rule and execute no public side effect beyond reading allowlisted public research endpoints.
 
 ## Next: Phase 3
 
