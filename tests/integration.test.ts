@@ -47,7 +47,7 @@ describe('local pipeline persistence', () => {
   });
   it('reopens persisted data and applies migrations idempotently', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-test-')); const path = join(dir, 'mint.sqlite');
-    try { const first = openDatabase(path); new MintService(first.db, defaultRules).createOpportunity(demoInputs[1]); first.sqlite.close(); const second = openDatabase(path); expect(new MintService(second.db, defaultRules).listOpportunities()).toHaveLength(1); expect(second.sqlite.pragma('user_version', { simple: true })).toBe(2); second.sqlite.close(); } finally { rmSync(dir, { recursive: true, force: true }); }
+    try { const first = openDatabase(path); new MintService(first.db, defaultRules).createOpportunity(demoInputs[1]); first.sqlite.close(); const second = openDatabase(path); expect(new MintService(second.db, defaultRules).listOpportunities()).toHaveLength(1); expect(second.sqlite.pragma('user_version', { simple: true })).toBe(3); second.sqlite.close(); } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 });
 async function call(path: string, method = 'GET', body?: unknown, extraHeaders: Record<string, string> = {}) {

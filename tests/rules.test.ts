@@ -24,6 +24,7 @@ describe('scoring and Director', () => {
   it('gives empty evidence zero support and asks for research', () => { const scores = score([], defaultRules); expect(scores.total).toBe(0); expect(scores.demand.evidenceIds).toEqual([]); expect(decide([], scores, pass, defaultRules).decision).toBe('RESEARCH_MORE'); });
   it('links scores to the correct evidence and reports difficulty in the right direction', () => { const input = evidence(); const result = score(input, defaultRules); expect(result.demand.evidenceIds).toHaveLength(9); expect(result.willingnessToPay.evidenceIds).toHaveLength(4); expect(result.buildComplexity.value).toBe(40); expect(result.buildComplexity.evidenceIds).toEqual(['e12']); expect(result.total).toBeGreaterThanOrEqual(defaultRules.validateScore); expect(decide(input, result, pass, defaultRules).decision).toBe('VALIDATE'); });
   it('allows configurable stricter thresholds', () => { const rules = RulesSchema.parse({ validateScore: 99, buildScore: 100 }); expect(decide(evidence(), score(evidence(), rules), pass, rules).decision).toBe('RESEARCH_MORE'); });
+  it('requires explicit buying intent before VALIDATE', () => { const input = evidence().filter(e => e.signalType !== 'willingness_to_pay'); expect(decide(input, score(input, defaultRules), pass, defaultRules).decision).toBe('RESEARCH_MORE'); });
   it('never builds from synthetic evidence even with validation and maximum scores', () => { const input = evidence(); const result = decide(input, { ...score(input, defaultRules), total: 100 }, pass, defaultRules, true); expect(result.blockers).toContain('Synthetic evidence cannot authorize BUILD.'); expect(result.decision).not.toBe('BUILD'); });
   it.each(['few', 'one-domain', 'one-community', 'no-pain', 'no-distribution', 'no-validation'])('cannot bypass gate: %s', gate => {
     let input = evidence().map(e => ({ ...e, synthetic: false }));
@@ -43,7 +44,7 @@ describe('Palermo veto', () => {
     const review = inspectEvidence(input, defaultRules); const verdict = challenge(input, review.accepted, review.rejected);
     expect(verdict.verdict).toBe('VETO'); expect(verdict.critical).toBe(true); expect(decide(review.accepted, score(review.accepted, defaultRules), verdict, defaultRules, true).decision).toBe('KILL');
   });
-  it('vetoes commodity ideas and flags missing buying intent', () => { const input = [{ ...evidence()[0], signalType: 'commodity' as const }]; expect(challenge(input, input, []).verdict).toBe('VETO'); expect(challenge([], [], []).verdict).toBe('CAUTION'); });
+  it('treats commodity pressure as caution unless a critical risk exists', () => { const input = [{ ...evidence()[0], signalType: 'commodity' as const }]; expect(challenge(input, input, []).verdict).toBe('CAUTION'); expect(challenge([], [], []).verdict).toBe('CAUTION'); });
 });
 describe('financial authority and validation', () => {
   it('cannot configure positive, negative, or invalid spending limits', () => { for (const value of ['1', '-1', 'NaN', 'Infinity']) expect(() => readConfig({ SPEND_LIMIT: value })).toThrow(); expect(readConfig({}).spendLimit).toBe(0); });
