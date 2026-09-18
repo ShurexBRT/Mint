@@ -66,6 +66,7 @@ export function createApp(service: MintService) {
   app.get('/api/radar/clusters', (_req, res) => res.json(service.listResearchClusters()));
   app.get('/api/radar/runs', (_req, res) => res.json(service.listRadarRuns()));
   app.post('/api/radar/run', async (req, res) => res.json(await service.runRadar(req.body)));
+  app.post('/api/radar/hunt', async (req, res) => res.json(await service.runHunter(req.body)));
   app.post('/api/radar/clusters/:id/promote', async (req, res) =>
     res.status(201).json(await service.promoteResearchCluster(req.params.id)),
   );

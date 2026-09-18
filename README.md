@@ -46,6 +46,25 @@ At multiple layers:
 - paid external actions have no executor,
 - the dashboard always separates demo revenue from verified external revenue.
 
+## Phase 2.1: Autonomous Opportunity Hunter
+
+MINT can now run a deterministic **Autonomous Hunt** without asking the owner to invent search terms.
+
+The hunter rotates through zero-cost research missions such as:
+
+- operations data friction,
+- commerce administration,
+- developer toil,
+- integration gaps,
+- support operations,
+- document workflows.
+
+Each mission supplies four bounded research queries to Radar. After collection, MINT grades candidate clusters on signal count, identity diversity, source diversity, domain/community diversity, explicit pain, buying intent, recurrence, and confidence.
+
+A cluster may be **automatically promoted only into the internal decision pipeline** when it clears strict quality gates. Auto-promotion does not mean BUILD and cannot trigger any public or paid action.
+
+The hunter may promote at most one candidate per mission. Posting, messaging, deployment, account creation, purchasing, and spending remain unavailable.
+
 ## Phase 2: Research Radar
 
 MINT can now perform limited live research against two allowlisted public, keyless endpoints:
@@ -284,7 +303,7 @@ Default local database:
 ./data/mint.sqlite
 ```
 
-Current schema version: **3**
+Current schema version: **3** (Phase 2.1 adds no new persistence migration; cluster quality is derived from stored live signals.)
 
 Key tables include:
 

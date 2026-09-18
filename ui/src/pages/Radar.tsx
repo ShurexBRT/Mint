@@ -29,6 +29,12 @@ export function RadarPage({
     );
   };
 
+  const runHunter = () =>
+    perform(
+      () => api('/radar/hunt', { autoPromote: true }),
+      'Autonomous hunt completed. Strong internal candidates may be promoted automatically; no external action was executed.',
+    );
+
   const promote = (clusterId: string) =>
     perform(async () => {
       const detail = await api<{ id: string }>(`/radar/clusters/${clusterId}/promote`, {});
@@ -66,9 +72,17 @@ export function RadarPage({
         <p className="muted">
           MINT only stores public posts that match explicit pain/buying-intent rules. A hit is evidence to inspect, not proof of a business.
         </p>
-        <button className="primary" disabled={busy} onClick={() => void runRadar()}>
-          {busy ? 'Scanning…' : 'Run live radar'}
-        </button>
+        <div className="actions">
+          <button className="primary" disabled={busy} onClick={() => void runHunter()}>
+            {busy ? 'Hunting…' : 'Run autonomous hunt'}
+          </button>
+          <button className="secondary" disabled={busy} onClick={() => void runRadar()}>
+            Run custom radar
+          </button>
+        </div>
+        <p className="muted small">
+          Autonomous Hunt rotates through deterministic research missions and may promote one high-quality cluster into the internal pipeline. It cannot post, message, deploy, purchase, or spend.
+        </p>
       </div>
     </section>
 
@@ -90,14 +104,20 @@ export function RadarPage({
             <article className="radar-card" key={cluster.id}>
               <div className="row">
                 <Status value={cluster.status} />
-                <span className="muted small">{cluster.sourceCount} source types · {cluster.domainCount} domains</span>
+                <span className="muted small">Quality {cluster.quality.score}/100 · {cluster.quality.identityCount} identities</span>
               </div>
               <h3>{cluster.title}</h3>
               <p>{cluster.problemStatement}</p>
               <div className="keyword-list">
                 {cluster.keywords.map(keyword => <span key={keyword}>{label(keyword)}</span>)}
               </div>
-              <p className="muted small">{cluster.signalIds.length} public signals · Target hypothesis: {cluster.targetUser}</p>
+              <p className="muted small">
+                {cluster.signalIds.length} public signals · {cluster.quality.buyingIntentCount} buying-intent · {cluster.quality.painCount} pain/urgency · {cluster.sourceCount} source types
+              </p>
+              {!cluster.quality.autoPromoteEligible && (
+                <p className="muted small">Auto-promote blockers: {cluster.quality.blockers.join(' · ')}</p>
+              )}
+              <p className="muted small">Target hypothesis: {cluster.targetUser}</p>
               <button className="secondary" disabled={busy} onClick={() => void promote(cluster.id)}>
                 Promote to pipeline
               </button>

@@ -70,6 +70,19 @@ class FakeHackerNewsCollector implements ResearchCollector {
         confidence: 0.8,
         query,
       },
+      {
+        source: this.name,
+        sourceUrl: 'https://news.ycombinator.com/item?id=1003',
+        sourceType: 'forum' as const,
+        title: 'CSV invoice export accounting pain',
+        excerpt: 'Manually fixing the CSV invoice export before accounting import is painful for our team.',
+        signalType: 'pain' as const,
+        sourceIdentity: 'hn:user-e',
+        community: 'HN: finance operations',
+        capturedAt: '2026-09-05T10:00:00.000Z',
+        confidence: 0.83,
+        query,
+      },
     ];
   }
 }
@@ -102,16 +115,37 @@ describe('Research Radar', () => {
 
     const result = await service.runRadar({ queries: ['csv invoice export'], perSourceLimit: 5 });
     expect(result.spend).toBe(0);
-    expect(result.signalCount).toBe(4);
+    expect(result.signalCount).toBe(5);
     expect(result.clusterCount).toBeGreaterThanOrEqual(1);
-    expect(service.overview()).toMatchObject({ externalSpend: 0, aiSpend: 0, radarSignals: 4 });
+    expect(service.overview()).toMatchObject({ externalSpend: 0, aiSpend: 0, radarSignals: 5 });
 
     const cluster = service.listResearchClusters()[0];
     const promoted = await service.promoteResearchCluster(cluster.id);
     expect(promoted.evidenceMode).toBe('LIVE');
     expect(promoted.evidence.every(item => item.synthetic === false)).toBe(true);
     expect(promoted.status).toBe('RESEARCH_MORE');
-    expect(service.overview().liveEvidenceCount).toBe(4);
+    expect(service.overview().liveEvidenceCount).toBe(5);
+  });
+
+  it('scores strong clusters and can autonomously promote one internal candidate', async () => {
+    const radar = new ResearchRadar([new FakeGitHubCollector(), new FakeHackerNewsCollector()]);
+    const service = new MintService(
+      connection.db,
+      defaultRules,
+      radar,
+      RadarConfigSchema.parse({ cooldownMinutes: 5, maxQueries: 4, perSourceLimit: 5 }),
+    );
+
+    const result = await service.runHunter({ autoPromote: true });
+    expect(result.spend).toBe(0);
+    expect(result.externalActions).toBe(0);
+    expect(result.eligibleClusterCount).toBeGreaterThanOrEqual(1);
+    expect(result.promotedOpportunityIds).toHaveLength(1);
+
+    const promoted = service.detail(result.promotedOpportunityIds[0]);
+    expect(promoted.evidenceMode).toBe('LIVE');
+    expect(promoted.evidence.every(item => item.synthetic === false)).toBe(true);
+    expect(promoted.status).not.toBe('BUILD');
   });
 
   it('enforces a radar cooldown instead of hammering public endpoints', async () => {

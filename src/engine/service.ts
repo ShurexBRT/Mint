@@ -17,6 +17,8 @@ import { aggregateMetrics } from '../experiments/analytics.js';
 import { evaluateKill } from '../experiments/kill.js';
 import { inspectEvidence } from '../evidence/validate.js';
 import { DEFAULT_QUERIES, ResearchRadar } from '../research/radar.js';
+import { evaluateCluster } from '../research/quality.js';
+import { selectHunterMission } from '../research/missions.js';
 
 export class MintService {
   readonly pipeline: Pipeline;
@@ -310,7 +312,13 @@ export class MintService {
   }
 
   listResearchClusters() {
-    return this.db.select().from(tables.researchClusters).orderBy(desc(tables.researchClusters.updatedAt)).all();
+    const signals = this.listResearchSignals();
+    return this.db
+      .select()
+      .from(tables.researchClusters)
+      .orderBy(desc(tables.researchClusters.updatedAt))
+      .all()
+      .map(cluster => ({ ...cluster, quality: evaluateCluster(cluster, signals) }));
   }
 
   listRadarRuns() {
@@ -393,6 +401,52 @@ export class MintService {
       errors: result.errors,
       spend: 0,
       clusters: this.listResearchClusters().filter(cluster => result.clusters.some(item => item.id === cluster.id)),
+    };
+  }
+
+  async runHunter(raw: unknown = {}) {
+    const input = z.object({
+      autoPromote: z.boolean().default(true),
+    }).strict().parse(raw ?? {});
+
+    const mission = selectHunterMission(this.listRadarRuns().length);
+    const radarResult = await this.runRadar({
+      queries: mission.queries,
+      perSourceLimit: this.radarConfig.perSourceLimit,
+    });
+
+    const eligible = radarResult.clusters
+      .filter(cluster => cluster.status === 'PROPOSED' && cluster.quality.autoPromoteEligible)
+      .sort((a, b) => b.quality.score - a.quality.score);
+
+    const promotedOpportunityIds: string[] = [];
+    if (input.autoPromote && eligible.length) {
+      const promoted = await this.promoteResearchCluster(eligible[0].id);
+      promotedOpportunityIds.push(promoted.id);
+    }
+
+    record(this.db, {
+      agent: 'Opportunity Hunter',
+      action: 'HUNTER_MISSION_COMPLETED',
+      decision: promotedOpportunityIds.length ? 'PROMOTED_INTERNAL_CANDIDATE' : 'NO_STRONG_CANDIDATE',
+      result: {
+        mission,
+        signals: radarResult.signalCount,
+        clusters: radarResult.clusterCount,
+        eligibleClusters: eligible.map(cluster => ({ id: cluster.id, score: cluster.quality.score })),
+        promotedOpportunityIds,
+        externalActions: 0,
+        spend: 0,
+      },
+    });
+
+    return {
+      mission,
+      ...radarResult,
+      eligibleClusterCount: eligible.length,
+      promotedOpportunityIds,
+      externalActions: 0,
+      spend: 0,
     };
   }
 
